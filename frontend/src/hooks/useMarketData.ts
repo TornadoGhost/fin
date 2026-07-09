@@ -47,15 +47,18 @@ export function useMarketData() {
         return next;
       });
 
-      // Accumulate history
-      const h = historyRef.current;
+      // Accumulate history without mutating snapshotted arrays/objects.
+      // Build a fresh history object with new arrays for changed tickers so
+      // values already handed to components (and possibly frozen) stay intact.
+      const prevHistory = historyRef.current;
+      const nextHistory: PriceHistory = { ...prevHistory };
       for (const u of updates) {
-        if (!h[u.ticker]) h[u.ticker] = [];
-        h[u.ticker].push({ price: u.price, time: u.timestamp });
-        if (h[u.ticker].length > MAX_HISTORY) {
-          h[u.ticker] = h[u.ticker].slice(-MAX_HISTORY);
-        }
+        const existing = nextHistory[u.ticker] ?? [];
+        const appended = [...existing, { price: u.price, time: u.timestamp }];
+        nextHistory[u.ticker] =
+          appended.length > MAX_HISTORY ? appended.slice(-MAX_HISTORY) : appended;
       }
+      historyRef.current = nextHistory;
       setHistoryVersion((v) => v + 1);
     };
 
