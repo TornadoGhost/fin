@@ -10,19 +10,18 @@ services:
     ports:
       - "8000:8000"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/api/health').status==200 else 1)"]
       interval: 5s
       timeout: 3s
       retries: 10
 
   playwright:
-    image: mcr.microsoft.com/playwright:v1.52.0-jammy
+    build:
+      context: ./test
+      dockerfile: Dockerfile
     depends_on:
       app:
         condition: service_healthy
     environment:
       - BASE_URL=http://app:8000
-    working_dir: /work
-    volumes:
-      - ./test:/work
-    command: npx playwright test
+    command: npx playwright test --reporter=line
