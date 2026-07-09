@@ -22,6 +22,9 @@ COPY --from=frontend-build /build/out/ static/
 
 EXPOSE 8000
 
+# Persist SQLite DB on the mounted volume at /app/db (see docker-compose.yml)
+ENV DB_PATH=/app/db/finally.db
+
 WORKDIR /app/backend
 
 CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
